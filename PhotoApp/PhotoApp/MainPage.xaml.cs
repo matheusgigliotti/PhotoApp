@@ -20,58 +20,15 @@ namespace PhotoApp
         }
         private async void BtnSaveToAlbum_Clicked(object sender, EventArgs e)
         {
-            var cameraStatus = await CrossPermissions.Current.CheckPermissionStatusAsync(Permission.Camera);
-            var storageStatus = await CrossPermissions.Current.CheckPermissionStatusAsync(Permission.Storage);
-
-            if (cameraStatus != PermissionStatus.Granted || storageStatus != PermissionStatus.Granted)
-            {
-                var results = await CrossPermissions.Current.RequestPermissionsAsync(new[] { Permission.Camera, Permission.Storage });
-                cameraStatus = results[Permission.Camera];
-                storageStatus = results[Permission.Storage];
-            }
-
-            if (cameraStatus == PermissionStatus.Granted && storageStatus == PermissionStatus.Granted)
-            {
-                await CrossMedia.Current.Initialize();
-
-                if (!CrossMedia.Current.IsCameraAvailable || !CrossMedia.Current.IsTakePhotoSupported)
-                {
-                    await DisplayAlert("No Camera", ":( No camera available.", "OK");
-                    return;
-                }
-
-
-                var name = string.Format("PhotoApp_{0}", DateTime.Now.ToString("yyMMddhhmmss"));
-
-                var file = await CrossMedia.Current.TakePhotoAsync(new Plugin.Media.Abstractions.StoreCameraMediaOptions
-                {
-                    DefaultCamera = Plugin.Media.Abstractions.CameraDevice.Rear,
-                    SaveToAlbum = true,
-                    Name = name,
-
-                });
-
-                if (file == null)
-                    return;
-
-                await DisplayAlert("File Location", file.Path, "OK");
-
-                image.Source = ImageSource.FromStream(() =>
-                {
-                    var stream = file.GetStream();
-                    return stream;
-                });
-
-            }
-            else
-            {
-                await DisplayAlert("Permissions Denied", "Unable to take photos.", "OK");
-                //On iOS you may want to send your user to the settings screen.
-                //CrossPermissions.Current.OpenAppSettings();
-            }
+            await TakePicture(true);
         }
 
         private async void BtnDontSaveToAlbum_Clicked(object sender, EventArgs e)
+        {
+            await TakePicture(false);
+        }
+
+        private async Task TakePicture(bool saveToAlbum)
         {
             var cameraStatus = await CrossPermissions.Current.CheckPermissionStatusAsync(Permission.Camera);
             var storageStatus = await CrossPermissions.Current.CheckPermissionStatusAsync(Permission.Storage);
@@ -99,7 +56,7 @@ namespace PhotoApp
                 var file = await CrossMedia.Current.TakePhotoAsync(new Plugin.Media.Abstractions.StoreCameraMediaOptions
                 {
                     DefaultCamera = Plugin.Media.Abstractions.CameraDevice.Rear,
-                    SaveToAlbum = false,
+                    SaveToAlbum = saveToAlbum,
                     Name = name,
 
                 });
@@ -107,7 +64,7 @@ namespace PhotoApp
                 if (file == null)
                     return;
 
-                await DisplayAlert("File Location", file.Path, "OK");
+                //await DisplayAlert("File Location", file.Path, "OK");
 
                 image.Source = ImageSource.FromStream(() =>
                 {
@@ -124,3 +81,4 @@ namespace PhotoApp
         }
     }
 }
+
